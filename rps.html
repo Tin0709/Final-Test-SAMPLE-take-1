@@ -1,0 +1,61 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <title>RPS Client</title>
+    <style>
+      body { font-family: sans-serif; padding: 16px; }
+      #log { border: 1px solid #ccc; padding: 8px; min-height: 120px; list-style: none; }
+      #log li { margin: 4px 0; }
+      #controls { margin-top: 12px; }
+      input { padding: 6px; }
+      button { padding: 6px 10px; margin-left: 6px; }
+      small { color: #666; }
+    </style>
+  </head>
+  <body>
+    <h1>Rock Paper Scissors</h1>
+    <p><small>Enter R, P, or S then click Send. Only your first message each round counts.</small></p>
+    <ul id="log"></ul>
+    <div id="controls">
+      <input id="msgInput" placeholder="R, P or S" />
+      <button id="sendBtn">Send</button>
+    </div>
+
+    <script>
+      const log = document.getElementById('log');
+      const input = document.getElementById('msgInput');
+      const btn = document.getElementById('sendBtn');
+
+      function addLine(text) {
+        const li = document.createElement('li');
+        li.textContent = text;
+        log.appendChild(li);
+        log.scrollTop = log.scrollHeight;
+      }
+
+      const ws = new WebSocket('ws://localhost:8080');
+
+      ws.onopen = () => addLine('Connected to server.');
+      ws.onclose = () => addLine('Disconnected.');
+      ws.onerror = () => addLine('WebSocket error.');
+
+      ws.onmessage = (e) => {
+        addLine(e.data);
+      };
+
+      function sendMsg() {
+        const v = (input.value || '').trim().toUpperCase();
+        if (!v) return;
+        ws.send(v);         // server enforces "only first message counts" per round
+        input.value = '';
+        input.focus();
+      }
+
+      btn.addEventListener('click', sendMsg);
+      input.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') sendMsg();
+      });
+    </script>
+  </body>
+</html>
